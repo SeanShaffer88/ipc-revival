@@ -26,6 +26,9 @@ C ABI, broker lifetime, .NET wrapper, tests and release workflow were inspected.
   assigns its kill-on-close job atomically at process creation using the Windows
   job-list startup attribute. A later assignment would leave a parent-death
   orphan window even with a suspended child; that window is closed.
+- Healthy disposal disconnects the private control pipe and allows normal broker
+  unwinding before falling back to termination. Normal integration checks the
+  broker exits cleanly; forced termination is reserved for failed/stuck cleanup.
 - SafeHandle P/Invoke parameters pin native session lifetime during calls.
   A timed mutex serializes per-session requests, including concurrent managed
   callers; invalid sizes/timeouts are rejected before starting work.
@@ -38,7 +41,8 @@ C ABI, broker lifetime, .NET wrapper, tests and release workflow were inspected.
 Supported new surface: Windows x64 C ABI and .NET 10 client for the included
 checksum worker. Managed byte arrays are copied into broker-owned shared memory;
 this is not zero-copy from the managed heap. Reuse is inside the native session.
-Timeout includes control I/O and native work; cleanup can add up to one second.
+Timeout includes control I/O and native work; failure cleanup can add up to one
+second. Healthy Dispose allows an additional 250 ms grace period before fallback.
 A timeout while waiting for another caller's session lock does not cancel that
 other request. Once a request starts, transport failure poisons/closes its session;
 callers must create a fresh session before retrying. No automatic replay.

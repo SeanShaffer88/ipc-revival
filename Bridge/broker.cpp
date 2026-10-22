@@ -3,10 +3,11 @@
 #include "ipc_bridge.h"
 #include <iostream>
 static_assert(sizeof(Response)==sizeof(ipc_result),"Bridge response ABI layout must match");
+struct ControlClosed {};
 void Transfer(HANDLE pipe,void* data,DWORD size,bool write) {
     auto bytes=static_cast<uint8_t*>(data);
     while(size) {DWORD count=0;BOOL ok=write?WriteFile(pipe,bytes,size,&count,nullptr):ReadFile(pipe,bytes,size,&count,nullptr);
-        if(!ok||!count) throw std::runtime_error("control pipe closed");size-=count;bytes+=count;}
+        if(!ok||!count) throw ControlClosed{};size-=count;bytes+=count;}
 }
 int wmain(int argc,wchar_t** argv) {
     if(argc!=3)return 1;
@@ -28,5 +29,6 @@ int wmain(int argc,wchar_t** argv) {
             auto response=future.get();if(response.id!=id||response.size!=size)throw std::runtime_error("response mismatch");
             Transfer(pipe,&response,sizeof(response),true);
         }
-    }catch(...){CloseHandle(pipe);return 3;}
+    }catch(ControlClosed){CloseHandle(pipe);return 0;}
+    catch(...){CloseHandle(pipe);return 3;}
 }

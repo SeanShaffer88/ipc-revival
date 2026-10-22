@@ -21,7 +21,7 @@ struct Session {
     Handle pipe,process,job;
     std::timed_mutex mutex;
     uint64_t sequence=0;
-    bool failed=false;
+    bool failed=true; // unpublished/partially opened sessions take the failure cleanup path
     void Stop() noexcept {
         failed=true;
         if(process.value && WaitForSingleObject(process.value,0)==WAIT_TIMEOUT) {
@@ -29,7 +29,15 @@ struct Session {
             WaitForSingleObject(process.value,1000);
         }
     }
-    ~Session(){Stop();}
+    ~Session(){
+        // A healthy broker should unwind mapped owners normally. If cleanup is
+        // poisoned, keep disposal bounded and fall back to job termination.
+        if(!failed && process.value && pipe.value) {
+            DisconnectNamedPipe(pipe.value);
+            WaitForSingleObject(process.value,250);
+        }
+        Stop();
+    }
 };
 struct JobAttributes {
     HANDLE job;
@@ -115,7 +123,7 @@ int __cdecl ipc_open(const char* endpoint,uint32_t timeout_ms,void** output) {
         ULONG peer=0;if(!GetNamedPipeClientProcessId(session->pipe.value,&peer)||peer!=process.dwProcessId) throw Failure{IPC_PEER};
         uint32_t ready=0;Transfer(*session,&ready,sizeof(ready),false,deadline);
         if(ready!=0x49504331) throw Failure{IPC_PEER};
-        *output=session.release();return IPC_OK;
+        session->failed=false;*output=session.release();return IPC_OK;
     } catch(...){return Status();}
 }
 int __cdecl ipc_hash(void* handle,const uint8_t* bytes,uint32_t size,uint32_t timeout_ms,ipc_result* result) {
