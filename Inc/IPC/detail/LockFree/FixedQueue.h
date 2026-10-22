@@ -6,6 +6,7 @@
 #pragma warning(pop)
 
 #include <array>
+#include <type_traits>
 
 
 namespace IPC
@@ -103,6 +104,7 @@ namespace IPC
                     }
                     catch (...)
                     {
+                        obj->~T();
                         restoreIndex();
                         throw;
                     }
@@ -135,6 +137,7 @@ namespace IPC
                         }
                         catch (...)
                         {
+                            obj->~T();
                             restoreIndex();
                             throw;
                         }
@@ -154,7 +157,7 @@ namespace IPC
 
         /// Specialization for trivially copyable types.
         template <typename T, std::size_t Capacity>
-        class FixedQueue<T, Capacity, std::enable_if_t<boost::has_trivial_destructor<T>::value && boost::has_trivial_assign<T>::value>>
+        class FixedQueue<T, Capacity, std::enable_if_t<std::is_trivially_destructible<T>::value && std::is_trivially_copy_assignable<T>::value>>
         {
         public:
             bool IsEmpty() const
@@ -176,7 +179,7 @@ namespace IPC
             template <typename Function>
             std::size_t ConsumeAll(Function&& func)
             {
-                return m_queue.consume_all([this, &func](T& value) { func(std::move(value)); });
+                return m_queue.consume_all([&func](T&& value) { func(std::move(value)); });
             }
 
         private:

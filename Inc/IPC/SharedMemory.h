@@ -79,7 +79,7 @@ namespace IPC
         template <typename T>
         Allocator<T> GetAllocator()
         {
-            return{ m_memory.get_allocator<T>() };
+            return Allocator<T>{ m_memory.get_segment_manager() };
         }
 
         template <typename T>
