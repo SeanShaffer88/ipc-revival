@@ -58,6 +58,8 @@ namespace Managed
 
                     ConnectionPtr(ConnectionPtr&& other);
 
+                    ConnectionPtr(std::unique_ptr<IPC::ServerConnection<Request, Response, Traits>>&& pointer);
+
                     ~ConnectionPtr();
 
                     SharedMemory GetInputMemory() const;
@@ -91,6 +93,8 @@ namespace Managed
                     using std::unique_ptr<IPC::ClientConnection<Request, Response, Traits>>::unique_ptr;
 
                     ConnectionPtr(ConnectionPtr&& other);
+
+                    ConnectionPtr(std::unique_ptr<IPC::ClientConnection<Request, Response, Traits>>&& pointer);
 
                     ~ConnectionPtr();
 

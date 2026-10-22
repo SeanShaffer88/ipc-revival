@@ -43,6 +43,7 @@ jobs:
           path: .build/bundle/
   legacy:
     runs-on: windows-2022
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - name: Restore and test historical native and C++/CLI solution

@@ -12,6 +12,9 @@ C ABI, broker lifetime, .NET wrapper, tests and release workflow were inspected.
 - Historical C++/CLI callbacks use named local `auto_handle` guards instead of
   returning managed stack-semantics objects by value; current MSVC rejects the
   old return. Native headers use `use_count()` rather than deprecated `unique()`.
+- Legacy connection-pointer wrappers explicitly accept moved base pointers;
+  inheriting `unique_ptr` constructors does not inherit its base move constructor.
+  Compile-time checks protect both client/server ownership conversions.
 - Failed native event/work/wait/timer/pool acquisition throws before use. A
   duplicate named-event handle is closed when create-only verification rejects
   it. Invalid handles and failed waits throw, and negative/overflow finite waits

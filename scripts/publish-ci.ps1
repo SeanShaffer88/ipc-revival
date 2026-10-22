@@ -9,7 +9,7 @@ if($commit-ne$env:GITHUB_SHA){throw 'Checkout does not match workflow commit'}
 $sourceHash=& (Join-Path $PSScriptRoot 'source-hash.ps1') -Root $root
 $evidence=@()
 $legacy=Get-Content -Raw (Join-Path $root '.build/validated/validation.json')|ConvertFrom-Json
-if($legacy.commit-ne$commit-or -not $legacy.passed-or $legacy.legacyManagedCases-le0){throw 'Historical managed validation is missing or stale'}
+if($legacy.commit-ne$commit-or -not $legacy.passed-or $legacy.legacyManagedCases-ne5){throw 'Historical managed validation is missing or stale'}
 foreach($config in @('Debug','Release')){
     $bundle=Join-Path $root ('.build/validated/'+$config)
     $entry=Get-Content -Raw (Join-Path $bundle 'validation.json')|ConvertFrom-Json
