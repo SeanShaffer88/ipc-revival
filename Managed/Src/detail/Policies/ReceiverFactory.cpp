@@ -59,7 +59,7 @@ namespace Managed
                 {
                     msclr::auto_handle<TaskCallback> disposer{ this };
 
-                    auto detector = m_scheduler->m_recursionDetector.AutoDetect();
+                    msclr::auto_handle<System::IDisposable> detector{ m_scheduler->m_recursionDetector.Detect() };
 
                     (*m_callback)();
                 }

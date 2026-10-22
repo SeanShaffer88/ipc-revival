@@ -22,7 +22,10 @@ function Finish($Child,[bool]$Success=$true){
 function Stop-Server($Child){$Child.Process.StandardInput.WriteLine('quit');Finish $Child}
 try{
     $name='managed-'+[guid]::NewGuid().ToString('N');$server=Server $name
-    Finish (Managed 'run' $name);Stop-Server $server
+    Finish (Managed 'run' $name)
+    $parallel=@(1..4|ForEach-Object {Managed 'run' $name})
+    foreach($client in $parallel){Finish $client}
+    Stop-Server $server
     $name='managed-'+[guid]::NewGuid().ToString('N');$server=Server $name '1500'
     Finish (Managed 'timeout' $name);Stop-Server $server
     $name='managed-'+[guid]::NewGuid().ToString('N');$server=Server $name

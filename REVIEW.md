@@ -9,6 +9,9 @@ C ABI, broker lifetime, .NET wrapper, tests and release workflow were inspected.
   or consumer throws. Lifetime/capacity regressions exercise both paths.
 - A scheduler's final count transition shares the condition-variable mutex;
   nested callback detection uses a thread-local stack rather than Boost.Thread.
+- Historical C++/CLI callbacks use named local `auto_handle` guards instead of
+  returning managed stack-semantics objects by value; current MSVC rejects the
+  old return. Native headers use `use_count()` rather than deprecated `unique()`.
 - Failed native event/work/wait/timer/pool acquisition throws before use. A
   duplicate named-event handle is closed when create-only verification rejects
   it. Invalid handles and failed waits throw, and negative/overflow finite waits
@@ -20,7 +23,9 @@ C ABI, broker lifetime, .NET wrapper, tests and release workflow were inspected.
   I/O before releasing stack buffers/events. One budget covers each operation.
 - The bridge authenticates its control-pipe peer by the process ID it created,
   uses a random pipe name, rejects remote pipe clients, inherits no handles, and
-  starts the broker suspended until assigned to a kill-on-close job.
+  assigns its kill-on-close job atomically at process creation using the Windows
+  job-list startup attribute. A later assignment would leave a parent-death
+  orphan window even with a suspended child; that window is closed.
 - SafeHandle P/Invoke parameters pin native session lifetime during calls.
   A timed mutex serializes per-session requests, including concurrent managed
   callers; invalid sizes/timeouts are rejected before starting work.

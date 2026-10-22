@@ -31,6 +31,23 @@ struct Session {
     }
     ~Session(){Stop();}
 };
+struct JobAttributes {
+    HANDLE job;
+    std::unique_ptr<unsigned char[]> storage;
+    LPPROC_THREAD_ATTRIBUTE_LIST list=nullptr;
+    explicit JobAttributes(HANDLE value):job{value} {
+        SIZE_T size=0;InitializeProcThreadAttributeList(nullptr,1,0,&size);
+        if(!size) throw Failure{IPC_RESOURCE};
+        storage=std::make_unique<unsigned char[]>(size);
+        auto candidate=reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage.get());
+        if(!InitializeProcThreadAttributeList(candidate,1,0,&size)) throw Failure{IPC_RESOURCE};
+        if(!UpdateProcThreadAttribute(candidate,0,PROC_THREAD_ATTRIBUTE_JOB_LIST,&job,sizeof(job),nullptr,nullptr)) {
+            DeleteProcThreadAttributeList(candidate);throw Failure{IPC_IO};
+        }
+        list=candidate;
+    }
+    ~JobAttributes(){if(list) DeleteProcThreadAttributeList(list);}
+};
 ULONGLONG Deadline(uint32_t ms) { if(ms<1||ms>30000) throw Failure{IPC_ARGUMENT};return GetTickCount64()+ms; }
 DWORD Remaining(ULONGLONG deadline) {
     auto now=GetTickCount64(); if(now>=deadline) throw Failure{IPC_TIMEOUT};return static_cast<DWORD>(deadline-now);
@@ -85,10 +102,12 @@ int __cdecl ipc_open(const char* endpoint,uint32_t timeout_ms,void** output) {
         JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};limits.BasicLimitInformation.LimitFlags=JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
         if(!SetInformationJobObject(session->job.value,JobObjectExtendedLimitInformation,&limits,sizeof(limits))) throw Failure{IPC_IO};
         auto path=BrokerPath();std::wstring command=L"\""+path+L"\" \""+pipeName+L"\" "+std::wstring{name.begin(),name.end()};
-        STARTUPINFOW startup{};startup.cb=sizeof(startup);PROCESS_INFORMATION process{};
-        if(!CreateProcessW(path.c_str(),command.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW|CREATE_SUSPENDED,nullptr,nullptr,&startup,&process)) throw Failure{IPC_RESOURCE};
+        JobAttributes attributes{session->job.value};
+        STARTUPINFOEXW startup{};startup.StartupInfo.cb=sizeof(startup);startup.lpAttributeList=attributes.list;PROCESS_INFORMATION process{};
+        // Assign at creation, closing the owner-death window between process
+        // creation and a later AssignProcessToJobObject call.
+        if(!CreateProcessW(path.c_str(),command.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW|CREATE_SUSPENDED|EXTENDED_STARTUPINFO_PRESENT,nullptr,nullptr,&startup.StartupInfo,&process)) throw Failure{IPC_RESOURCE};
         session->process.value=process.hProcess;Handle thread{process.hThread};
-        if(!AssignProcessToJobObject(session->job.value,session->process.value)) throw Failure{IPC_IO};
         if(ResumeThread(thread.value)==static_cast<DWORD>(-1)) throw Failure{IPC_IO};
         Handle event{CreateEventW(nullptr,TRUE,FALSE,nullptr)};OVERLAPPED op{};op.hEvent=event.value;DWORD count=0;
         BOOL ok=ConnectNamedPipe(session->pipe.value,&op);DWORD error=ok?ERROR_SUCCESS:GetLastError();
