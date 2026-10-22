@@ -5,9 +5,7 @@
 #include <thread>
 #include <atomic>
 
-#pragma warning(push)
-#include <boost/thread/tss.hpp>
-#pragma warning(pop)
+
 
 
 namespace IPC
@@ -59,6 +57,9 @@ namespace Policies
 
             void Signal()
             {
+                // Serialize the zero transition with the wait predicate to
+                // prevent notification between predicate evaluation and sleep.
+                std::lock_guard<std::mutex> guard{ m_lock };
                 if (--m_count == 0)
                 {
                     m_zero.notify_all();
@@ -85,45 +86,30 @@ namespace Policies
         };
 
 
+        // Stack frames, rather than Boost.Thread TLS allocation, track nested
+        // scheduler callbacks on each thread without another runtime library.
         class ThreadDetector
         {
+            struct Frame { const ThreadDetector* owner; Frame* previous; };
+            inline static thread_local Frame* s_current=nullptr;
         public:
             bool IsExpectedThread() const
             {
-                if (auto isExpected = m_isExpected.get())
-                {
-                    return *isExpected;
-                }
-
+                for(auto frame=s_current; frame; frame=frame->previous)
+                    if(frame->owner==this) return true;
                 return false;
             }
-
-            auto Detect()
+            class Guard
             {
-                bool* isExpected = m_isExpected.get();
-                bool prev;
-
-                if (isExpected)
-                {
-                    prev = *isExpected;
-                    *isExpected = true;
-                }
-                else
-                {
-                    prev = false;
-                    isExpected = new bool{ true };
-                    m_isExpected.reset(isExpected);
-                }
-
-                auto deleter = [prev, isExpected](void*) { *isExpected = prev; };
-
-                return std::unique_ptr<void, decltype(deleter)>{ (void*) true, std::move(deleter) };
-            }
-
-        private:
-            boost::thread_specific_ptr<bool> m_isExpected;
+                Frame m_frame;
+            public:
+                explicit Guard(const ThreadDetector* owner) : m_frame{owner,s_current} { s_current=&m_frame; }
+                Guard(const Guard&)=delete;
+                Guard& operator=(const Guard&)=delete;
+                ~Guard() { s_current=m_frame.previous; }
+            };
+            Guard Detect() const { return Guard{this}; }
         };
-
 
         static VOID CALLBACK OnRun(PTP_CALLBACK_INSTANCE /*instance*/, PVOID context, PTP_WORK /*work*/)
         {

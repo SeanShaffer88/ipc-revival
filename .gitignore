@@ -40,3 +40,5 @@
 
 # Build folders
 **/x64
+/.build/
+/.deps/

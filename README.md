@@ -1,5 +1,7 @@
 # IPC
 
+**Independent revival fork: development milestone.** Read [README.revival.md](README.revival.md) for the current CMake build and [REVIVAL.md](REVIVAL.md) for scope and remaining release gates. The historical instructions below are retained for provenance; managed projects are not validated by the new native build.
+
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Microsoft/IPC/blob/master/LICENSE) [![Build status](https://ci.appveyor.com/api/projects/status/dl929xf6rgaj257b/branch/master?svg=true)](https://ci.appveyor.com/project/ara-ayvazyan/ipc/branch/master)
 
 IPC is a C++ library that provides inter-process communication using shared memory on Windows.<br/>
