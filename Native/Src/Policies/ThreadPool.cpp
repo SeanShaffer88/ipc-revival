@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "IPC/Policies/ThreadPool.h"
 #include "IPC/Exception.h"
+#include "IPC/detail/Resources.h"
 
 
 namespace IPC
@@ -11,7 +12,7 @@ namespace Policies
     {
     public:
         Impl()
-            : m_pool{ ::CreateThreadpool(nullptr) }
+            : m_pool{ detail::Acquire(detail::Resource::pool,[] { return ::CreateThreadpool(nullptr); }) }
         {
             if (m_pool == nullptr)
             {
@@ -25,12 +26,13 @@ namespace Policies
         Impl(std::uint32_t minThreadCount, std::uint32_t maxThreadCount)
             : Impl{}
         {
-            if (minThreadCount > maxThreadCount)
+            if (maxThreadCount == 0 || minThreadCount > maxThreadCount)
             {
                 throw Exception{ "The maxThreadCount must be greater or equal to minThreadCount." };
             }
 
-            ::SetThreadpoolThreadMinimum(m_pool, minThreadCount);
+            if(!::SetThreadpoolThreadMinimum(m_pool, minThreadCount))
+                throw std::system_error(static_cast<int>(::GetLastError()),std::system_category());
             ::SetThreadpoolThreadMaximum(m_pool, maxThreadCount);
         }
 

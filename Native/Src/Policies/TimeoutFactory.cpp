@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "IPC/Policies/TimeoutFactory.h"
+#include "IPC/detail/Resources.h"
 #include <thread>
 #include <atomic>
 #include <cassert>
@@ -16,8 +17,8 @@ namespace Policies
         Timeout(boost::optional<ThreadPool> pool, Function&& func, const std::chrono::milliseconds& defaultTimeout)
             : m_func{ std::forward<Function>(func) },
               m_pool{ std::move(pool) },
-              m_timer{ ::CreateThreadpoolTimer(
-                  OnTimer, this, m_pool ? static_cast<PTP_CALLBACK_ENVIRON>(m_pool->GetEnvironment()) : nullptr), ::CloseThreadpoolTimer },
+              m_timer{ detail::Acquire(detail::Resource::timer,[&] { return ::CreateThreadpoolTimer(
+                  OnTimer, this, m_pool ? static_cast<PTP_CALLBACK_ENVIRON>(m_pool->GetEnvironment()) : nullptr); }), ::CloseThreadpoolTimer },
               m_defaultTimeout{ defaultTimeout }
         {}
 
@@ -61,7 +62,8 @@ namespace Policies
 
             m_handlerThreadId = std::this_thread::get_id();
 
-            m_func();
+            try { m_func(); }
+            catch (...) { ::OutputDebugStringA("IPC timer callback threw; exception contained.\n"); }
 
             m_handlerThreadId = std::thread::id{};
         }

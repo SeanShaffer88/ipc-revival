@@ -179,7 +179,7 @@ namespace IPC
             template <typename Function>
             std::size_t ConsumeAll(Function&& func)
             {
-                return m_queue.consume_all([&func](T&& value) { func(std::move(value)); });
+                return m_queue.consume_all([&func](auto&& value) { func(std::move(value)); });
             }
 
         private:

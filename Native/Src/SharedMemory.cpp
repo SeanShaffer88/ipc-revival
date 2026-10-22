@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "IPC/SharedMemory.h"
 #include "IPC/Version.h"
+#include "IPC/detail/Resources.h"
 #include <string>
 
 
@@ -10,6 +11,8 @@ namespace IPC
     {
         const char* MakeVersionedName(const char* name)
         {
+            detail::CheckResource(detail::Resource::memory);
+            if(!name) throw std::invalid_argument("Shared memory name cannot be null");
             thread_local std::string s_name{ IPC_VERSION_TOKEN "_" };
             s_name.resize(sizeof(IPC_VERSION_TOKEN "_") - 1);
             s_name += name;

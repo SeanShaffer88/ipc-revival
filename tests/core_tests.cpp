@@ -3,12 +3,17 @@
 #include <IPC/detail/LockFree/FixedQueue.h>
 #include <IPC/detail/KernelEvent.h>
 #include <IPC/Policies/AsyncReceiverFactory.h>
+#include <IPC/Managed/detail/Interop/Transport.h>
 #include <atomic>
 #include <stdexcept>
 #include <string>
 #include <iostream>
 
 void Check(bool value) { if (!value) throw std::runtime_error("check failed"); }
+using LegacyTransport=IPC::Managed::detail::Interop::Transport<int,int>;
+using LegacyTraits=IPC::Managed::detail::Interop::Traits;
+static_assert(std::is_convertible<std::unique_ptr<IPC::ClientConnection<int,int,LegacyTraits>>,LegacyTransport::Client::ConnectionPtr>::value,"Client connection wrapper must accept ownership from its base pointer");
+static_assert(std::is_convertible<std::unique_ptr<IPC::ServerConnection<int,int,LegacyTraits>>,LegacyTransport::Server::ConnectionPtr>::value,"Server connection wrapper must accept ownership from its base pointer");
 struct Tracked {
     static int live;
     static bool failMove;

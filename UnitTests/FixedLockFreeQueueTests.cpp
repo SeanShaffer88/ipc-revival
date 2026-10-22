@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(ExceptionSafetyTest)
         std::shared_ptr<bool> m_throw;
     };
 
-    static_assert(!boost::has_trivial_destructor<X>::value, "X should be a complex type.");
+    static_assert(!std::is_trivially_destructible<X>::value, "X should be a complex type.");
 
     detail::LockFree::FixedQueue<X, 1> queue;
 

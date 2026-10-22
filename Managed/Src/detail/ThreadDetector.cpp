@@ -39,12 +39,6 @@ namespace Managed
             bool m_prev;
         };
 
-
-        msclr::auto_handle<System::IDisposable> ThreadDetector::AutoDetect()
-        {
-            return msclr::auto_handle<System::IDisposable>{ Detect() };
-        }
-
         System::IDisposable^ ThreadDetector::Detect()
         {
             return gcnew Detector{ this };

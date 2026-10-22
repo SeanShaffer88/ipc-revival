@@ -12,6 +12,7 @@
 using namespace IPC;
 
 
+// Boost 1.92 queue/allocator metadata exceeds the historical 32 KiB fixture. These tests validate connector metadata, not segment capacity.
 BOOST_AUTO_TEST_SUITE(ConnectorTests)
 
 static_assert(!std::is_copy_constructible<Connector<int, int>>::value, "Connector should not be copy constructible.");
@@ -34,7 +35,7 @@ BOOST_AUTO_TEST_CASE(InvalidHostInfoTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     auto correctInfo = hostInfo;
@@ -74,7 +75,7 @@ BOOST_AUTO_TEST_CASE(PingInfoVerificationTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
@@ -112,7 +113,7 @@ BOOST_AUTO_TEST_CASE(InvalidAcceptorInfoTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
@@ -185,7 +186,7 @@ BOOST_AUTO_TEST_CASE(ClosedAcceptorTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
@@ -241,7 +242,7 @@ BOOST_AUTO_TEST_CASE(DuplexConnectionConstructionTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
@@ -310,7 +311,7 @@ BOOST_AUTO_TEST_CASE(NoInputConnectionConstructionTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
@@ -374,7 +375,7 @@ BOOST_AUTO_TEST_CASE(NoOutputConnectionConstructionTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
@@ -440,7 +441,7 @@ BOOST_AUTO_TEST_CASE(DestroyedWaitHandlesAfterDestructionTest)
 {
     auto name = detail::GenerateRandomString();
 
-    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 32 * 1024);
+    auto memory = std::make_shared<SharedMemory>(create_only, name.c_str(), 256 * 1024);
     auto& hostInfo = memory->Construct<detail::AcceptorHostInfo>(unique_instance, memory->GetAllocator<char>());
 
     hostInfo.m_processId = detail::KernelProcess::GetCurrentProcessId();
