@@ -1,3 +1,5 @@
+> **Fork identity: independent continuation — development milestone.** Derived from [microsoft/IPC](https://github.com/microsoft/IPC). Native C++17/Boost 1.92 build and process tests are on the default branch. Managed interop, full legacy coverage and stable release remain pending. See [revival scope](README.revival.md), [support](SUPPORT.md) and [security reporting](SECURITY.md). See [fork provenance](PROVENANCE.md) for ownership and reporting routes.
+
 # IPC
 
 **Independent revival fork: development milestone.** Read [README.revival.md](README.revival.md) for the current CMake build and [REVIVAL.md](REVIVAL.md) for scope and remaining release gates. The historical instructions below are retained for provenance; managed projects are not validated by the new native build.
@@ -28,3 +30,4 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 Copyright (c) Microsoft Corporation. All rights reserved.
 
 Licensed under the [MIT](https://github.com/Microsoft/IPC/blob/master/LICENSE) License.
+
