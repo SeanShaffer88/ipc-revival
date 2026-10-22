@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(KernelObjectTest)
     BOOST_TEST(!detail::KernelObject{ nullptr });
 
     ::SetLastError(ERROR_SUCCESS);
-    BOOST_CHECK_NO_THROW(detail::KernelObject{ INVALID_HANDLE_VALUE });
+    BOOST_CHECK_THROW(detail::KernelObject{ INVALID_HANDLE_VALUE }, std::exception);
 
     ::SetLastError(ERROR_INVALID_HANDLE);
     BOOST_CHECK_THROW((detail::KernelObject{ INVALID_HANDLE_VALUE, true }), std::exception);

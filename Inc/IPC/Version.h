@@ -29,7 +29,7 @@
 #define IPC_LIB_NAME            "IPCD"
 #endif
 
-#define IPC_VERSION             1000    // XYYY, X=major, YYY=minor
+#define IPC_VERSION             1001    // Revival ABI: do not join historical upstream mappings.
 
 #define IPC_LIB_VERSION         IPC_LIB_NAME "-" BOOST_STRINGIZE(IPC_VERSION)
 

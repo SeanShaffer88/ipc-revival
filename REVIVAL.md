@@ -50,3 +50,7 @@ Before a stable WR-001 release:
 5. Repeat representative benchmarks, record CPU/OS/toolchain and distributions, review the actual consumer benefit, then package a reviewed scope with provenance, checksums and successful exact-commit GitHub CI.
 
 No stable release or finished revival is claimed by this milestone. Development source and CI can be published while these gates remain open. Windows ARM64/x86, cross-account services, durable delivery and broad API modernization are outside the initial scope.
+
+## 0.2.0 release preparation update
+
+The native suite is restored (all 1,915 generated cases pass locally), with explicit modern Boost fixture sizing. A .NET 10 SafeHandle client now uses a C ABI and job-owned broker to bound host exposure to poisoned allocator locks. Fault tests cover six resource acquisitions, real allocation exhaustion, handle rejection/wait errors and callback containment. Managed tests include actual allocator-owner death and managed-owner job cleanup. Full Debug/Release validation and a separate original C++/CLI/NUnit CI lane gate stable publication. See REVIEW.md for the final scope, known raw-native crash limitations and release requirements. Earlier remaining-gate notes above describe the starting milestone; current check results and release status must be verified before publication.

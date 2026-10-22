@@ -14,12 +14,18 @@ jobs:
         configuration: [Debug, Release]
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
       - name: Fetch pinned Boost archive
         shell: pwsh
         run: ./scripts/fetch-boost.ps1
       - name: Build and test native core and workers
         shell: pwsh
         run: ./scripts/build.ps1 -BoostRoot ./.deps/boost-1.92.0 -Configuration ${{ matrix.configuration }}
+      - name: Stage verified runtime and evidence
+        shell: pwsh
+        run: ./scripts/stage.ps1 -BoostRoot ./.deps/boost-1.92.0 -Configuration ${{ matrix.configuration }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -29,3 +35,39 @@ jobs:
             .build/x64/process-results-*.json
             .build/x64/${{ matrix.configuration }}/ipc_worker.exe
             .build/x64/${{ matrix.configuration }}/ipc_calc.exe
+            .build/x64/ctest-*.xml
+            .build/x64/build-evidence-*.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: verified-${{ matrix.configuration }}
+          path: .build/bundle/
+  legacy:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v7
+      - name: Restore and test historical native and C++/CLI solution
+        shell: pwsh
+        run: ./scripts/test-legacy.ps1
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: verified-legacy
+          path: .build/legacy/
+  publish:
+    needs: [native, legacy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: windows-2022
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: verified-*
+          merge-multiple: true
+          path: .build/validated/
+      - name: Publish only when release.json is ready
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/publish-ci.ps1

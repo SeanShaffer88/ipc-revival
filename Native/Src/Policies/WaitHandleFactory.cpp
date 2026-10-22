@@ -2,6 +2,7 @@
 #include "IPC/Policies/WaitHandleFactory.h"
 #include "IPC/detail/KernelObject.h"
 #include "IPC/Exception.h"
+#include "IPC/detail/Resources.h"
 #include <atomic>
 #include <thread>
 
@@ -17,8 +18,8 @@ namespace Policies
         Waiter(boost::optional<ThreadPool> pool, detail::KernelObject obj, Function&& func)
             : m_func{ std::forward<Function>(func) },
               m_pool{ std::move(pool) },
-              m_wait{ ::CreateThreadpoolWait(
-                  OnEvent, this, m_pool ? static_cast<PTP_CALLBACK_ENVIRON>(m_pool->GetEnvironment()) : nullptr), ::CloseThreadpoolWait },
+              m_wait{ detail::Acquire(detail::Resource::wait,[&] { return ::CreateThreadpoolWait(
+                  OnEvent, this, m_pool ? static_cast<PTP_CALLBACK_ENVIRON>(m_pool->GetEnvironment()) : nullptr); }), ::CloseThreadpoolWait },
               m_obj{ std::move(obj) }
         {}
 
@@ -52,7 +53,7 @@ namespace Policies
             }
             else
             {
-                throw Exception{ "Unexpected wait result is received." };
+                ::OutputDebugStringA("IPC unexpected thread-pool wait result.\n");
             }
         }
 
@@ -67,7 +68,9 @@ namespace Policies
 
             m_handlerThreadId = std::this_thread::get_id();
 
-            auto monitor = m_func() && !m_stop;     // The m_stop must be checked last for recursive case.
+            bool monitor = false;
+            try { monitor = m_func() && !m_stop; } // m_stop must be checked last for recursive case.
+            catch (...) { m_stop = true; ::OutputDebugStringA("IPC wait callback threw; waiter stopped.\n"); }
 
             m_handlerThreadId = std::thread::id{};
 

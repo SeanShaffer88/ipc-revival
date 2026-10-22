@@ -51,6 +51,9 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ItemGroup>
+    <ClCompile Include="..\..\tests\upstream_main.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\ChannelFactoryTests.cpp" />
     <ClCompile Include="..\AcceptorTests.cpp" />
     <ClCompile Include="..\AcceptTests.cpp" />
