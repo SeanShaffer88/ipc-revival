@@ -62,7 +62,7 @@ namespace Managed
         internal:
             void operator()(System::Object^ /*state*/, System::Boolean /*timedOut*/)
             {
-                auto detector = m_recursionDetector.AutoDetect();
+                msclr::auto_handle<System::IDisposable> detector{ m_recursionDetector.Detect() };
 
                 if (auto callback = *m_callback)
                 {

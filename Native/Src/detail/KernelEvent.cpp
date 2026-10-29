@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "IPC/detail/KernelEvent.h"
+#include "IPC/detail/Resources.h"
 
 
 namespace IPC
@@ -11,7 +12,7 @@ namespace detail
     {}
 
     KernelEvent::KernelEvent(create_only_t, bool manualReset, bool initialState, const char* name)
-        : KernelObject{ ::CreateEventA(nullptr, manualReset, initialState, name), true }
+        : KernelObject{ Acquire(Resource::event,[&] { return ::CreateEventA(nullptr, manualReset, initialState, name); }), true }
     {}
 
     KernelEvent::KernelEvent(open_only_t, const char* name)

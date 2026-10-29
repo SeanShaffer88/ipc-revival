@@ -16,7 +16,8 @@ namespace Managed
             template <typename T>
             msclr::auto_handle<T> MakeAutoHandle(T^ obj)
             {
-                return msclr::auto_handle<T>{ obj };
+                msclr::auto_handle<T> result(obj);
+                return result;
             }
 
             template <typename T>

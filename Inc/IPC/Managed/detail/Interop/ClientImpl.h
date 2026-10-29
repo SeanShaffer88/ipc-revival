@@ -17,6 +17,11 @@ namespace Managed
         Transport<Request, Response>::Client::ConnectionPtr::ConnectionPtr(ConnectionPtr&& other) = default;
 
         template <typename Request, typename Response>
+        Transport<Request, Response>::Client::ConnectionPtr::ConnectionPtr(std::unique_ptr<IPC::ClientConnection<Request, Response, Traits>>&& pointer)
+            : std::unique_ptr<IPC::ClientConnection<Request, Response, Traits>>{ std::move(pointer) }
+        {}
+
+        template <typename Request, typename Response>
         Transport<Request, Response>::Client::ConnectionPtr::~ConnectionPtr() = default;
 
         template <typename Request, typename Response>

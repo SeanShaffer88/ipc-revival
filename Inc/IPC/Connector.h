@@ -81,7 +81,7 @@ namespace IPC
                 auto clients = m_clients.GetComponents();
                 for (auto& entry : *clients)
                 {
-                    assert(entry.second.unique());  // No one must be holding an extra ref on clients.
+                    assert(entry.second.use_count() == 1);  // No one must be holding an extra ref on clients.
                 }
             }
         }

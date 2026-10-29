@@ -2,6 +2,7 @@
 #include "IPC/detail/KernelObject.h"
 #include "IPC/Exception.h"
 #include <system_error>
+#include <limits>
 
 
 namespace IPC
@@ -12,10 +13,12 @@ namespace detail
     {
         HANDLE VerifyHandle(HANDLE handle, bool verifyValidHandle)
         {
-            if (!handle || handle == INVALID_HANDLE_VALUE || verifyValidHandle)
+            auto error = ::GetLastError();
+            bool invalid = !handle || handle == INVALID_HANDLE_VALUE;
+            if (invalid || (verifyValidHandle && error != ERROR_SUCCESS))
             {
-                auto error = ::GetLastError();
-                if (error != ERROR_SUCCESS)
+                if (!invalid) ::CloseHandle(handle); // ownership was transferred even when verification rejects it
+                if (error == ERROR_SUCCESS) error = ERROR_INVALID_HANDLE;
                 {
                     try
                     {
@@ -42,12 +45,18 @@ namespace detail
 
     void KernelObject::Wait() const
     {
-        ::WaitForSingleObject(m_handle.get(), INFINITE);
+        if (::WaitForSingleObject(m_handle.get(), INFINITE) != WAIT_OBJECT_0)
+            throw std::system_error(static_cast<int>(::GetLastError()), std::system_category());
     }
 
     bool KernelObject::Wait(std::chrono::milliseconds timeout) const
     {
-        return ::WaitForSingleObject(m_handle.get(), static_cast<DWORD>(timeout.count())) == WAIT_OBJECT_0;
+        if(timeout.count()<0 || static_cast<unsigned long long>(timeout.count())>=INFINITE)
+            throw std::invalid_argument("Finite wait timeout must be in [0, INFINITE)");
+        auto result=::WaitForSingleObject(m_handle.get(), static_cast<DWORD>(timeout.count()));
+        if(result==WAIT_OBJECT_0) return true;
+        if(result==WAIT_TIMEOUT) return false;
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category());
     }
 
     bool KernelObject::IsSignaled() const

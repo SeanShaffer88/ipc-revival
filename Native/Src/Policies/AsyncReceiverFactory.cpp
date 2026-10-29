@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "IPC/Policies/AsyncReceiverFactory.h"
+#include "IPC/detail/Resources.h"
 #include <mutex>
 #include <condition_variable>
 #include <thread>
@@ -18,8 +19,8 @@ namespace Policies
         Impl(detail::Callback<void()> handler, boost::optional<ThreadPool> pool)
             : m_handler{ std::move(handler) },
               m_pool{ std::move(pool) },
-              m_work{ ::CreateThreadpoolWork(
-                  OnRun, this, m_pool ? static_cast<PTP_CALLBACK_ENVIRON>(m_pool->GetEnvironment()) : nullptr), ::CloseThreadpoolWork }
+              m_work{ detail::Acquire(detail::Resource::work,[&] { return ::CreateThreadpoolWork(
+                  OnRun, this, m_pool ? static_cast<PTP_CALLBACK_ENVIRON>(m_pool->GetEnvironment()) : nullptr); }), ::CloseThreadpoolWork }
         {}
 
         void Stop()
@@ -122,7 +123,8 @@ namespace Policies
             auto signaler = m_pendingTasks.AutoSignal();
             auto detector = m_recursionDetector.Detect();
 
-            m_handler();
+            try { m_handler(); }
+            catch (...) { ::OutputDebugStringA("IPC async callback threw; callback exception contained.\n"); }
         }
 
 

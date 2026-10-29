@@ -87,7 +87,7 @@ namespace IPC
 
             auto component = componentFactory([eraser]() mutable { eraser.reset(); });
 
-            if (!eraser.unique())
+            if (eraser.use_count() != 1)
             {
                 auto deleter = std::get_deleter<Deleter>(eraser);
                 assert(deleter);

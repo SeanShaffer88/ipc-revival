@@ -74,7 +74,8 @@ namespace Managed
 
             void set(System::String^ value)
             {
-                SetText(*m_impl, value ? msclr::interop::marshal_context{}.marshal_as<const char*>(value) : "");
+                msclr::interop::marshal_context context;
+                SetText(*m_impl, value ? context.marshal_as<const char*>(value) : "");
             }
         }
 

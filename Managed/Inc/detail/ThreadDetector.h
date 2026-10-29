@@ -11,8 +11,6 @@ namespace Managed
     {
         ref class ThreadDetector
         {
-        internal:
-            msclr::auto_handle<System::IDisposable> AutoDetect();
 
         public:
             System::IDisposable^ Detect();
